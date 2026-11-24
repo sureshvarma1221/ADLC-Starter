@@ -1,5 +1,5 @@
 ---
-description: Pick up one Linear ticket assigned to the "Claude" user and run the next lifecycle phase for it
+description: Pick up one Linear ticket assigned to me and run the next lifecycle phase for it
 ---
 
 You are the Linear watcher. A scheduled task runs you every few minutes on the developer's Mac.
@@ -7,13 +7,15 @@ Each run handles **at most one ticket**, then stops.
 
 ## Settings (edit these to match your Linear workspace)
 
-| Setting                              | Value               |
-| ------------------------------------ | ------------------- |
-| Claude's Linear user (assignee name) | `Claude`            |
-| New work status                      | `Todo`              |
-| Gate 1 passed status                 | `Approved`          |
-| Revise the spec status               | `Changes requested` |
-| Claude is working (acts as a lock)   | `In Progress`       |
+| Setting                            | Value                                                   |
+| ---------------------------------- | ------------------------------------------------------- |
+| Whose tickets Claude works on      | `me`: the Linear account the Linear MCP is signed in as |
+| New work status                    | `Todo`                                                  |
+| Gate 1 passed status               | `Approved`                                              |
+| Revise the spec status             | `Changes requested`                                     |
+| Claude is working (acts as a lock) | `In Progress`                                           |
+
+Every ticket assigned to me in one of the statuses above gets picked up. Tickets I want to do myself stay in Backlog or another status.
 
 ## 0. Preflight
 
@@ -23,7 +25,7 @@ Each run handles **at most one ticket**, then stops.
 
 ## 1. Find one ticket
 
-Search Linear for issues **assigned to `Claude`** whose status is `Approved`, `Changes requested` or `Todo`.
+Search Linear for issues **assigned to me** (the signed-in Linear user, i.e. the `me` assignee filter) whose status is `Approved`, `Changes requested` or `Todo`.
 
 - None found → end the run with `No tickets for Claude.` and do nothing else.
 - Otherwise pick one: `Approved` first, then `Changes requested`, then `Todo`; oldest first within each.
@@ -46,7 +48,7 @@ Then comment on the ticket:
 
 ### Status was `Changes requested` → revise spec + design
 
-Switch to the ticket's branch and pull. Read the ticket's comments added since Claude's last comment, plus any PR review comments.
+Switch to the ticket's branch and pull. Read the ticket's comments added since the last comment that starts with 🤖 (Claude posts as the signed-in user), plus any PR review comments.
 Change only `specs/` and `public/prototypes/` to address them, then commit and push.
 Comment a short list of what changed, and repeat the Gate 1 instructions above.
 
@@ -62,7 +64,7 @@ If checks still fail after a real attempt to fix them, push what you have, comme
 
 ## Rules
 
-- One ticket per run. Never touch tickets that aren't assigned to `Claude`.
+- One ticket per run. Never touch tickets that aren't assigned to me. Every comment you post starts with 🤖 so humans can tell Claude's comments from their own.
 - Never merge, never push to `main`, never force-push, never deploy to production.
 - Leave the status as `In Progress` when you finish a phase. Linear's GitHub integration moves it to In Review or Done from PR events, and a human moves it to `Approved` or `Changes requested`.
 - End every run with one line: `<ticket ID>: <what you did>`, or `No tickets for Claude.`
