@@ -86,3 +86,24 @@ Import the repo at <https://vercel.com/new>. Every PR gets a preview deploy, and
 - Claude cannot merge, force-push or deploy to production: `.claude/settings.json` blocks it and `CLAUDE.md` forbids it.
 - Only repo collaborators with write access can trigger `@claude`.
 - No real patient data or secrets in tickets, specs, fixtures or logs. Claude reads whatever is in the Linear ticket.
+
+## Start tickets from Linear (label `claude`)
+
+Adding the label **`claude`** to a Linear ticket starts **Claude: start ticket** for it automatically.
+Linear sends a webhook to this app's `/api/linear-webhook` route on Vercel, which checks Linear's signature and starts the GitHub workflow.
+
+One-time setup:
+
+1. **GitHub token.** Create a fine-grained token (<https://github.com/settings/personal-access-tokens/new>) limited to this repo with **Actions: Read and write**.
+2. **Vercel environment variables.** Project → Settings → Environment Variables, for Production:
+   - `GITHUB_DISPATCH_TOKEN`: the token from step 1
+   - `LINEAR_WEBHOOK_SECRET`: from step 3 (add it after creating the webhook)
+   - Optional: `TRIGGER_LABEL` (default `claude`), `GITHUB_REPOSITORY` (default: the repo Vercel deploys from)
+3. **Linear webhook.** Linear → Settings → API → Webhooks → **New webhook**:
+   - URL: `https://<your-production-domain>/api/linear-webhook`
+   - Data change events: **Issues** only
+   - Copy the **signing secret** into `LINEAR_WEBHOOK_SECRET`, then redeploy on Vercel so it takes effect.
+4. **Label.** Create a workspace label named `claude` in Linear.
+
+To use it: write the ticket, then add the `claude` label. A draft PR appears in about 5–10 minutes.
+To run a ticket again, remove the label, delete the old branch, and add the label again.
