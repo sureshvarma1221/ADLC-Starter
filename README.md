@@ -86,3 +86,27 @@ Import the repo at <https://vercel.com/new>. Every PR gets a preview deploy, and
 - Claude cannot merge, force-push or deploy to production: `.claude/settings.json` blocks it and `CLAUDE.md` forbids it.
 - Only repo collaborators with write access can trigger `@claude`.
 - No real patient data or secrets in tickets, specs, fixtures or logs. Claude reads whatever is in the Linear ticket.
+
+## Assign tickets to Claude (runs on your Mac)
+
+Assign a Linear ticket to the **Claude** user and Claude Code on your Mac picks it up. A scheduled task in the Claude desktop app runs `.claude/commands/linear-watch.md` every 10 minutes. Linear's status field is how you steer it:
+
+| You do in Linear                                            | Claude does                                                           |
+| ----------------------------------------------------------- | --------------------------------------------------------------------- |
+| Create a ticket, status **Todo**, assignee **Claude**       | Phase 1: spec, clickable prototype, draft PR, then comments the links |
+| Move it to **Changes requested** and comment what to change | Revises the spec and prototype                                        |
+| Move it to **Approved** (Gate 1)                            | Phases 2–3: code, unit and e2e tests, PR ready for review             |
+| Review the PR and preview, then merge (Gate 2)              | Nothing. Vercel deploys, and Linear moves the ticket to Done          |
+
+While Claude works, the ticket is **In Progress**, which also stops it being picked twice.
+
+One-time setup:
+
+1. **Linear user.** Invite a member named `Claude` (any email you control, e.g. a `+claude` alias of yours).
+2. **Linear statuses.** Team settings → Workflow: add `Approved` and `Changes requested` under _Started_.
+3. **Claude Code connections.** In the desktop app, run `/mcp` and sign in to **linear**. Run `gh auth login` once in a terminal.
+4. **Scheduled task.** In the Claude desktop app, add a task that runs every 10 minutes with this prompt:
+   `cd ~/Documents/ADLC/ADLC-Starter, run "git switch main && git pull --ff-only", then follow .claude/commands/linear-watch.md exactly.`
+
+Your Mac must be awake with the Claude app open. Missed runs happen when the app next opens.
+To change the user name, statuses or rules, edit the Settings table in `.claude/commands/linear-watch.md`.
