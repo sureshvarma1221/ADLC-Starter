@@ -1,0 +1,76 @@
+# Phase 1: Linear ticket -> spec + prototype -> draft PR, then stop for human approval (Gate 1).
+# Start it from GitHub → Actions → "Claude: start ticket" → Run workflow, or:
+#   gh workflow run claude-ticket.yml -f ticket=ABC-123
+name: "Claude: start ticket"
+
+on:
+  workflow_dispatch:
+    inputs:
+      ticket:
+        description: Linear ticket ID (e.g. ABC-123)
+        required: true
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write
+
+jobs:
+  spec:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      TICKET: ${{ inputs.ticket }}
+      LINEAR_API_KEY: ${{ secrets.LINEAR_API_KEY }}
+      # A PAT lets the draft PR trigger CI and Vercel; GITHUB_TOKEN works but won't trigger other workflows.
+      GH_TOKEN: ${{ secrets.GH_PAT || github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 20, cache: npm }
+      - run: npm ci
+
+      - name: Read ticket from Linear and create branch
+        run: |
+          node scripts/linear.mjs get "$TICKET" > "$RUNNER_TEMP/ticket.json"
+          BRANCH=$(node -p "require(process.env.RUNNER_TEMP + '/ticket.json').branchName")
+          TITLE=$(node -p "require(process.env.RUNNER_TEMP + '/ticket.json').title")
+          echo "BRANCH=$BRANCH" >> "$GITHUB_ENV"
+          echo "TITLE=$TITLE" >> "$GITHUB_ENV"
+          git switch -c "$BRANCH"
+
+      - name: Claude writes the spec and prototype
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Run phase 1 (spec + design) for Linear ticket ${{ inputs.ticket }}.
+            The ticket, with comments and attachments, is JSON at ${{ runner.temp }}/ticket.json.
+            Follow .claude/commands/spec.md steps 3 and 4 only:
+            write specs/${{ inputs.ticket }}.md from specs/_TEMPLATE.md, then use the ui-designer
+            subagent to write the prototype in public/prototypes/.
+            Do not write application code. Do not commit, push or open a PR: the workflow does that.
+            If the ticket is too vague for testable acceptance criteria, write the open questions
+            into the spec's "Risks and open questions" section instead of guessing.
+          claude_args: --allowedTools "Read,Write,Edit,Glob,Grep,Task" --max-turns 40
+
+      - name: Open draft PR and notify Linear
+        run: |
+          git config user.name "claude-sdlc[bot]"
+          git config user.email "claude-sdlc@users.noreply.github.com"
+          git add specs public/prototypes
+          git commit -m "$TICKET: spec and prototype"
+          git push -u origin "$BRANCH"
+          PROTO="public/prototypes/$(echo "$TICKET" | tr '[:upper:]' '[:lower:]').html"
+          URL=$(gh pr create --draft --base main --head "$BRANCH" \
+            --title "$TICKET: $TITLE" \
+            --body "Fixes $TICKET
+
+          **Phase 1 — spec and design. Awaiting Gate 1.**
+
+          - Spec: \`specs/$TICKET.md\`
+          - Prototype: \`$PROTO\` (open \`/prototypes/$(basename "$PROTO")\` on the Vercel preview)
+
+          Review both, then comment \`@claude approved — build it\`, or comment \`@claude\` with changes.")
+          node scripts/linear.mjs comment "$TICKET" "Spec and clickable prototype are ready for review: $URL. Approve on the PR with \`@claude approved — build it\`. No code is written until then."
