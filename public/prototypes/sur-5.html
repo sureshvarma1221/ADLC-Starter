@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SUR-5 prototype · Request an appointment</title>
+    <style>
+      :root {
+        --background: #ffffff;
+        --foreground: #171717;
+        --muted: #525252;
+        --border: #a3a3a3;
+        --field-bg: #ffffff;
+        --error: #b91c1c;
+        --success-fg: #15803d;
+        --success-bg: #f0fdf4;
+        --focus: #2563eb;
+        --button-bg: #171717;
+        --button-fg: #ffffff;
+        --proto-bar: #f5f5f5;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --background: #0a0a0a;
+          --foreground: #ededed;
+          --muted: #a3a3a3;
+          --border: #737373;
+          --field-bg: #171717;
+          --error: #f87171;
+          --success-fg: #4ade80;
+          --success-bg: #052e16;
+          --focus: #60a5fa;
+          --button-bg: #ededed;
+          --button-fg: #0a0a0a;
+          --proto-bar: #171717;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--background);
+        color: var(--foreground);
+        font-family: Arial, Helvetica, sans-serif;
+        line-height: 1.5;
+      }
+      .proto-bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        padding: 8px 16px;
+        background: var(--proto-bar);
+        border-bottom: 1px solid var(--border);
+        font-size: 14px;
+      }
+      .proto-bar strong {
+        margin-right: 4px;
+      }
+      .proto-bar button {
+        font: inherit;
+        padding: 6px 12px;
+        min-height: 36px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--foreground);
+        cursor: pointer;
+      }
+      .proto-bar button[aria-pressed="true"] {
+        background: var(--foreground);
+        color: var(--background);
+      }
+      main {
+        max-width: 36rem;
+        margin: 0 auto;
+        padding: 32px 16px 64px;
+      }
+      h1 {
+        font-size: 1.75rem;
+        margin: 0 0 8px;
+      }
+      .intro {
+        color: var(--muted);
+        margin: 0 0 24px;
+      }
+      .field {
+        margin-bottom: 20px;
+      }
+      label {
+        display: block;
+        font-weight: 700;
+        margin-bottom: 6px;
+      }
+      .optional {
+        font-weight: 400;
+        color: var(--muted);
+      }
+      input,
+      textarea {
+        width: 100%;
+        min-height: 44px;
+        padding: 10px 12px;
+        font: inherit;
+        color: var(--foreground);
+        background: var(--field-bg);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+      }
+      textarea {
+        min-height: 120px;
+        resize: vertical;
+      }
+      input:focus-visible,
+      textarea:focus-visible,
+      button:focus-visible,
+      .success:focus-visible {
+        outline: 3px solid var(--focus);
+        outline-offset: 2px;
+      }
+      [aria-invalid="true"] {
+        border: 2px solid var(--error);
+      }
+      .error {
+        color: var(--error);
+        font-size: 0.9rem;
+        margin: 6px 0 0;
+      }
+      .error:empty {
+        display: none;
+      }
+      .counter {
+        color: var(--muted);
+        font-size: 0.875rem;
+        margin: 4px 0 0;
+        text-align: right;
+      }
+      .summary {
+        color: var(--error);
+        border: 2px solid var(--error);
+        border-radius: 8px;
+        padding: 10px 12px;
+        margin-bottom: 20px;
+        font-weight: 700;
+      }
+      .success {
+        color: var(--success-fg);
+        background: var(--success-bg);
+        border: 2px solid var(--success-fg);
+        border-radius: 8px;
+        padding: 12px 14px;
+        margin-bottom: 24px;
+        font-weight: 700;
+      }
+      .submit {
+        width: 100%;
+        min-height: 48px;
+        padding: 12px 20px;
+        font: inherit;
+        font-weight: 700;
+        color: var(--button-fg);
+        background: var(--button-bg);
+        border: 0;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+      @media (min-width: 640px) {
+        .submit {
+          width: auto;
+        }
+      }
+      [hidden] {
+        display: none !important;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="proto-bar" role="toolbar" aria-label="Prototype states">
+      <strong>SUR-5 prototype</strong>
+      <button type="button" data-state="empty" aria-pressed="false">Empty</button>
+      <button type="button" data-state="error" aria-pressed="false">Error</button>
+      <button type="button" data-state="success" aria-pressed="false">Success</button>
+      <button type="button" data-state="live" aria-pressed="true">Live</button>
+    </div>
+
+    <main>
+      <h1>Request an appointment</h1>
+      <p class="intro">Tell us when you'd like to come in and why. We'll contact you to confirm a time.</p>
+
+      <div class="success" role="status" tabindex="-1" data-testid="appointment-success" hidden>
+        Thanks, we'll contact you to confirm your appointment
+      </div>
+
+      <form data-testid="appointment-form" novalidate>
+        <p class="summary" data-testid="form-error-summary" hidden>Fix the highlighted fields to continue</p>
+
+        <div class="field">
+          <label for="name">Full name</label>
+          <input
+            id="name"
+            name="name"
+            type="text"
+            autocomplete="name"
+            data-testid="field-name"
+            aria-describedby="error-name"
+          />
+          <p class="error" id="error-name" data-testid="error-name"></p>
+        </div>
+
+        <div class="field">
+          <label for="email">Email</label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            autocomplete="email"
+            inputmode="email"
+            data-testid="field-email"
+            aria-describedby="error-email"
+          />
+          <p class="error" id="error-email" data-testid="error-email"></p>
+        </div>
+
+        <div class="field">
+          <label for="phone">Phone <span class="optional">(optional)</span></label>
+          <input
+            id="phone"
+            name="phone"
+            type="tel"
+            autocomplete="tel"
+            inputmode="tel"
+            data-testid="field-phone"
+          />
+        </div>
+
+        <div class="field">
+          <label for="date">Preferred date</label>
+          <input id="date" name="date" type="date" data-testid="field-date" aria-describedby="error-date" />
+          <p class="error" id="error-date" data-testid="error-date"></p>
+        </div>
+
+        <div class="field">
+          <label for="reason">Reason for visit</label>
+          <textarea
+            id="reason"
+            name="reason"
+            data-testid="field-reason"
+            aria-describedby="reason-counter error-reason"
+          ></textarea>
+          <p class="counter" id="reason-counter" data-testid="reason-counter">0 / 500</p>
+          <p class="error" id="error-reason" data-testid="error-reason"></p>
+        </div>
+
+        <button class="submit" type="submit" data-testid="submit-appointment">Request appointment</button>
+      </form>
+    </main>
+
+    <script>
+      (function () {
+        var form = document.querySelector("form");
+        var success = document.querySelector('[data-testid="appointment-success"]');
+        var summary = document.querySelector('[data-testid="form-error-summary"]');
+        var reason = document.getElementById("reason");
+        var counter = document.getElementById("reason-counter");
+        var order = ["name", "email", "date", "reason"];
+        var EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        function today() {
+          var d = new Date();
+          var m = String(d.getMonth() + 1).padStart(2, "0");
+          var day = String(d.getDate()).padStart(2, "0");
+          return d.getFullYear() + "-" + m + "-" + day;
+        }
+        function addDays(iso, n) {
+          var d = new Date(iso + "T12:00:00");
+          d.setDate(d.getDate() + n);
+          return d.toISOString().slice(0, 10);
+        }
+        document.getElementById("date").min = today();
+
+        function validate(v) {
+          var e = {};
+          if (!v.name.trim()) e.name = "Enter your full name";
+          if (!v.email.trim()) e.email = "Enter your email address";
+          else if (!EMAIL.test(v.email.trim())) e.email = "Enter a valid email address";
+          if (!v.date) e.date = "Choose a preferred date";
+          else if (v.date < today()) e.date = "Choose today or a future date";
+          if (!v.reason.trim()) e.reason = "Enter the reason for your visit";
+          else if (v.reason.length > 500) e.reason = "Keep the reason to 500 characters or fewer";
+          return e;
+        }
+        function values() {
+          return {
+            name: form.elements.name.value,
+            email: form.elements.email.value,
+            phone: form.elements.phone.value,
+            date: form.elements.date.value,
+            reason: reason.value,
+          };
+        }
+        function updateCounter() {
+          counter.textContent = reason.value.length + " / 500";
+        }
+        function showErrors(errors, moveFocus) {
+          var first = null;
+          order.forEach(function (f) {
+            var input = document.getElementById(f);
+            var msg = document.getElementById("error-" + f);
+            if (errors[f]) {
+              input.setAttribute("aria-invalid", "true");
+              msg.textContent = errors[f];
+              if (!first) first = input;
+            } else {
+              input.removeAttribute("aria-invalid");
+              msg.textContent = "";
+            }
+          });
+          summary.hidden = !first;
+          if (first && moveFocus) first.focus();
+        }
+        function reset() {
+          form.reset();
+          updateCounter();
+          showErrors({}, false);
+        }
+
+        reason.addEventListener("input", updateCounter);
+        form.addEventListener("submit", function (ev) {
+          ev.preventDefault();
+          var errors = validate(values());
+          if (Object.keys(errors).length) {
+            success.hidden = true;
+            showErrors(errors, true);
+            return;
+          }
+          reset();
+          success.hidden = false;
+          success.focus();
+        });
+
+        var setters = {
+          empty: function () {
+            reset();
+            success.hidden = true;
+          },
+          error: function () {
+            reset();
+            success.hidden = true;
+            form.elements.name.value = "Test Patient";
+            form.elements.email.value = "test.patient@";
+            form.elements.date.value = addDays(today(), -3);
+            showErrors(validate(values()), false);
+          },
+          success: function () {
+            reset();
+            success.hidden = false;
+          },
+          live: function () {
+            reset();
+            success.hidden = true;
+          },
+        };
+        document.querySelectorAll(".proto-bar button").forEach(function (b) {
+          b.addEventListener("click", function () {
+            document.querySelectorAll(".proto-bar button").forEach(function (x) {
+              x.setAttribute("aria-pressed", String(x === b));
+            });
+            setters[b.dataset.state]();
+          });
+        });
+      })();
+    </script>
+  </body>
+</html>
