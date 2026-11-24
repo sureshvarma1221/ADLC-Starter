@@ -43,7 +43,7 @@ jobs:
       - name: Claude writes the spec and prototype
         uses: anthropics/claude-code-action@v1
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt: |
             Run phase 1 (spec + design) for Linear ticket ${{ inputs.ticket }}.
             The ticket, with comments and attachments, is JSON at ${{ runner.temp }}/ticket.json.

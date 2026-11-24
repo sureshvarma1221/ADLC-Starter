@@ -61,11 +61,11 @@ Open this folder in Claude Code and run `/mcp`. Authorise **linear** and **verce
 1. Install the Claude GitHub app on this repo. In Claude Code, run `/install-github-app`, or go to <https://github.com/apps/claude>.
 2. Repo → Settings → Secrets and variables → Actions:
 
-   | Secret                | Value                                                                                                              |
-   | --------------------- | ------------------------------------------------------------------------------------------------------------------ |
-   | `ANTHROPIC_API_KEY`   | Anthropic Console key (or use `CLAUDE_CODE_OAUTH_TOKEN` from `claude setup-token` and change the workflows' input) |
-   | `LINEAR_API_KEY`      | From step 3.2                                                                                                      |
-   | `GH_PAT` _(optional)_ | Fine-grained token with contents + pull-requests write, so phase-1 draft PRs trigger CI                            |
+   | Secret                    | Value                                                                                                       |
+   | ------------------------- | ----------------------------------------------------------------------------------------------------------- |
+   | `CLAUDE_CODE_OAUTH_TOKEN` | Uses your Claude Pro/Max subscription. Run `claude setup-token` in a terminal and paste the token it prints |
+   | `LINEAR_API_KEY`          | From step 3.2                                                                                               |
+   | `GH_PAT` _(optional)_     | Fine-grained token with contents + pull-requests write, so phase-1 draft PRs trigger CI                     |
 
 3. Branch protection on `main`: require a pull request, 1 approval, and the **CI** checks to pass. This makes Gate 2 enforceable.
 
